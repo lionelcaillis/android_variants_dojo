@@ -3,18 +3,98 @@
 buildscript {
     repositories {
         jcenter()
+        maven {
+            url releasesRepoUrl
+            credentials {
+                username releasesRepoUsername
+                password releasesRepoPassword
+            }
+        }
+        maven {
+            url snapshotsRepoUrl
+            credentials {
+                username snapshotsRepoUsername
+                password snapshotsRepoPassword
+            }
+        }
+        maven {
+            url backeliteAndroidRepoUrl
+            credentials {
+                username backeliteRepoUsername
+                password backeliteRepoPassword
+            }
+        }
+        maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.1.+'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
+        classpath 'com.backelite.android:bk-jenkins-build-gradle-plugin:2.0'
+
+        classpath 'org.sonarqube.gradle:gradle-sonarqube-plugin:1.1'
     }
 }
 
 allprojects {
     repositories {
         jcenter()
+        maven {
+            url releasesRepoUrl
+            credentials {
+                username releasesRepoUsername
+                password releasesRepoPassword
+            }
+        }
+        maven {
+            url snapshotsRepoUrl
+            credentials {
+                username snapshotsRepoUsername
+                password snapshotsRepoPassword
+            }
+        }
+        maven {
+            url thirdPartyRepoUrl
+            credentials {
+                username thirdPartyRepoUsername
+                password thirdPartyRepoPassword
+            }
+        }
+        maven {
+            url backeliteAndroidRepoUrl
+            credentials {
+                username backeliteRepoUsername
+                password backeliteRepoPassword
+            }
+        }
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    }
+}
+
+apply plugin: 'org.sonarqube'
+
+sonarqube {
+
+    properties {
+        property "sonar.host.url", "http://sonar.backelite.com"
+        property "sonar.jdbc.url", "jdbc:mysql://thriller:3306/sonar?useUnicode=true&characterEncoding=utf8"
+        property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
+        property "sonar.jdbc.username", sonarDatabaseUserName
+        property "sonar.jdbc.password", sonarDatabasePassword
+        property "sonar.java.coveragePlugin", "jacoco"
+
+        property "sonar.projectKey", "androidvariantsdojo-appli-android"
+        property "sonar.projectName", "AndroidVariants - Dojo Android"
+        property "sonar.projectVersion", "1.0"
+        //properties["sonar.modules"] = "app,coreapi,coreengine"
+        //properties["sonar.skippedModules"] = "pluginws"
+        property "sonar.android.lint.report", "**/build/outputs/lint-results-debug.xml"
+        property "sonar.sourceEncoding", "UTF-8"
+        property "sonar.profile", "Android Lint"
+        property "sonar.scm.url", "scm:git:https://github.com/lionelcaillis/android_variants_dojo.git"
+        property "sonar.verbose", "true"
+        property "sonar.junit.reportsPath", "**/build/test-results"
     }
 }
 

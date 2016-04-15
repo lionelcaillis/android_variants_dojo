@@ -1,0 +1,114 @@
+apply plugin: 'jacoco'
+
+android {
+    buildTypes {
+        debug {
+            debuggable true
+
+            if (System.properties.getProperty('coverage')) {
+                testCoverageEnabled = true
+            }
+        }
+    }
+
+    sourceSets {
+        androidTest {
+            setRoot('src/test')
+        }
+        instrumentTest.setRoot('src/test')
+    }
+}
+
+sonarqube {
+
+    properties {
+        properties["sonar.tests"] = android.sourceSets.androidTest.java.srcDirs
+        property "sonar.jacoco.reportPath", "$buildDir/jacoco/testDebugUnitTest.exec"
+    }
+}
+
+jacoco {
+    toolVersion = "0.7.5.201505241946"
+    reportsDir = file("$buildDir/jacoco")
+}
+
+def fileFilter = [
+        '**/R.class',
+        '**/R$*.class',
+        '**/*$ViewInjector*.*',
+        '**/*$ViewBinder*.*',
+        '**/*$Provide*.*',
+        '**/*$Inject*.*',
+        '**/*$Module*.*',
+        '**/BuildConfig.*',
+        '**/Manifest*.*'
+]
+
+project.afterEvaluate {
+
+    def jacocoTestReportDependencies = []
+
+    def testTaskSourceNames = []
+    project.tasks.findAll { task -> task.name ==~ "test(.*)UnitTest" }.each { testTask -> testTaskSourceNames.add(testTask.name.find(/test(.*)UnitTest/) { match, sourceName -> sourceName }) }
+
+    def coverageAllSourceDirs = [
+            'src/main/java'
+    ]
+
+    testTaskSourceNames.each { sourceName ->
+        def variantParts = sourceName.split("(?<=.)(?=\\p{Upper})")
+
+        def sourcePath = variantParts.join('/').toLowerCase()
+
+        def testTaskName = "test${sourceName}UnitTest"
+
+        jacocoTestReportDependencies.add("${testTaskName}Coverage")
+        // Create coverage task of form 'testFlavorTypeCoverage' depending on 'testFlavorTypeUnitTest'
+        task "${testTaskName}Coverage"(type: JacocoReport, dependsOn: "${testTaskName}") {
+            group = "Reporting"
+            description = "Generate Jacoco coverage reports on the ${sourceName} build."
+
+            classDirectories = fileTree(
+                    dir: "$buildDir/intermediates/classes/${sourcePath}",
+                    excludes: fileFilter
+            )
+
+            def coverageSourceDirs = ["src/main/java"]
+            if (variantParts.size() > 0) {
+                coverageSourceDirs.add("/src/${variantParts.getAt(0).toString().toLowerCase()}/java")
+                coverageAllSourceDirs.add("/src/${variantParts.getAt(0).toString().toLowerCase()}/java")
+            }
+
+            additionalSourceDirs = files(coverageSourceDirs)
+            sourceDirectories = files(coverageSourceDirs)
+            executionData = files("$buildDir/jacoco/${testTaskName}.exec")
+
+            reports {
+                xml.enabled = true
+                html.enabled = true
+            }
+        }
+    }
+
+    task jacocoTestReport(type: JacocoReport, dependsOn: jacocoTestReportDependencies.findAll {
+        it ==~ ".*Debug.*"
+    }.toArray()) {
+        group = "Reporting"
+
+        description = "Generate Jacoco coverage reports"
+
+        classDirectories = fileTree(
+                dir: "$buildDir/intermediates/classes/*",
+                excludes: fileFilter
+        )
+
+        additionalSourceDirs = files(coverageAllSourceDirs)
+        sourceDirectories = files(coverageAllSourceDirs)
+        executionData = files("$buildDir/jacoco/testDebugUnitTest.exec")
+
+        reports {
+            xml.enabled = true
+            html.enabled = true
+        }
+    }
+}

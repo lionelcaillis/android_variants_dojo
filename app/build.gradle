@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'bkJenkinsBuild'
+apply from: '../jacoco.gradle'
 
 android {
     compileSdkVersion 23
@@ -11,11 +13,90 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    productFlavors {
+        sg {
+            applicationId "mobi.societegenerale.mobile"
+            versionName "3"
+        }
+        cdn {
+            applicationId "com.ocito.cdn.activity"
+            versionName "1"
+        }
+    }
+
     buildTypes {
+        pro_hf {
+            applicationIdSuffix "lapplipro_hf"
+            versionNameSuffix ".1"
+
+            debuggable true
+            signingConfig signingConfigs.debug
+
+            if (System.properties.getProperty('coverage')) {
+                testCoverageEnabled = true
+            }
+        }
+
+        ent_hf {
+            applicationIdSuffix "sogecashnet_hf"
+            versionNameSuffix ".0"
+
+            debuggable true
+            signingConfig signingConfigs.debug
+
+            if (System.properties.getProperty('coverage')) {
+                testCoverageEnabled = true
+            }
+        }
+
+        propri {
+            applicationIdSuffix "creditdunord"
+            versionNameSuffix ".0"
+
+            debuggable true
+            signingConfig signingConfigs.debug
+
+            if (System.properties.getProperty('coverage')) {
+                testCoverageEnabled = true
+            }
+        }
+
+        ent {
+            applicationIdSuffix "creditdunordent"
+            versionNameSuffix ".0"
+
+            debuggable true
+            signingConfig signingConfigs.debug
+
+            if (System.properties.getProperty('coverage')) {
+                testCoverageEnabled = true
+            }
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+
+    sourceSets {
+        sourceSets.propri.setRoot('src/build-types/propri')
+        sourceSets.ent.setRoot('src/build-types/ent')
+        sourceSets.ent_hf.setRoot('src/build-types/ent_hf')
+        sourceSets.pro_hf.setRoot('src/build-types/pro_hf')
+    }
+}
+
+bkJenkinsBuild {
+    projectName "androidvariantsdojo-appli-android"
+}
+
+sonarqube {
+
+    properties {
+        properties["sonar.sources"] = ["src/main", "src/cdn", "src/sg"]
+        // Leave default "sonar.binaries" property
+        //properties["sonar.binaries"] = file("$buildDir/intermediates/classes/debug")
     }
 }
 
