@@ -36,7 +36,6 @@ def fileFilter = [
         '**/R.class',
         '**/R$*.class',
         '**/*$ViewInjector*.*',
-        '**/*$ViewBinder*.*',
         '**/*$Provide*.*',
         '**/*$Inject*.*',
         '**/*$Module*.*',
@@ -74,9 +73,10 @@ project.afterEvaluate {
             )
 
             def coverageSourceDirs = ["src/main/java"]
-            if (variantParts.size() > 0) {
-                coverageSourceDirs.add("/src/${variantParts.getAt(0).toString().toLowerCase()}/java")
-                coverageAllSourceDirs.add("/src/${variantParts.getAt(0).toString().toLowerCase()}/java")
+// JACOCO UPDATE #1: use of source foldesr of ALL flavors (for each dimension) as source dir
+            variantParts.each { variantPart ->
+                coverageSourceDirs.add("/src/${variantPart.toString().toLowerCase()}/java")
+                coverageAllSourceDirs.add("/src/${variantPart.toString().toLowerCase()}/java")
             }
 
             additionalSourceDirs = files(coverageSourceDirs)
@@ -102,8 +102,8 @@ project.afterEvaluate {
                 excludes: fileFilter
         )
 
-        additionalSourceDirs = files(coverageAllSourceDirs)
-        sourceDirectories = files(coverageAllSourceDirs)
+        additionalSourceDirs = files(coverageAllSourceDirs.toUnique())
+        sourceDirectories = files(coverageAllSourceDirs.toUnique())
         executionData = files("$buildDir/jacoco/testDebugUnitTest.exec")
 
         reports {

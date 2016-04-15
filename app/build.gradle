@@ -13,77 +13,67 @@ android {
         versionCode 1
         versionName "1.0"
     }
+
+// VARIANTS UPDATE #1: Transform misused build types to flavors thanks to flavors dimensions
+// Warning: Don't forget to move src folders if necessary
+    flavorDimensions "bank", "type"
     productFlavors {
         sg {
+            dimension "bank"
             applicationId "mobi.societegenerale.mobile"
             versionName "3"
         }
         cdn {
+            dimension "bank"
             applicationId "com.ocito.cdn.activity"
             versionName "1"
+        }
+
+        pro_hf {
+            dimension "type"
+            applicationIdSuffix "lapplipro_hf"
+        }
+        ent_hf {
+            dimension "type"
+            applicationIdSuffix "sogecashnet_hf"
+        }
+        propri {
+            dimension "type"
+            applicationIdSuffix "creditdunord"
+        }
+        ent {
+            dimension "type"
+            applicationIdSuffix "creditdunordent"
         }
     }
 
     buildTypes {
-        pro_hf {
-            applicationIdSuffix "lapplipro_hf"
-            versionNameSuffix ".1"
-
-            debuggable true
-            signingConfig signingConfigs.debug
-
-            if (System.properties.getProperty('coverage')) {
-                testCoverageEnabled = true
-            }
-        }
-
-        ent_hf {
-            applicationIdSuffix "sogecashnet_hf"
-            versionNameSuffix ".0"
-
-            debuggable true
-            signingConfig signingConfigs.debug
-
-            if (System.properties.getProperty('coverage')) {
-                testCoverageEnabled = true
-            }
-        }
-
-        propri {
-            applicationIdSuffix "creditdunord"
-            versionNameSuffix ".0"
-
-            debuggable true
-            signingConfig signingConfigs.debug
-
-            if (System.properties.getProperty('coverage')) {
-                testCoverageEnabled = true
-            }
-        }
-
-        ent {
-            applicationIdSuffix "creditdunordent"
-            versionNameSuffix ".0"
-
-            debuggable true
-            signingConfig signingConfigs.debug
-
-            if (System.properties.getProperty('coverage')) {
-                testCoverageEnabled = true
-            }
-        }
-
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+
+// VARIANTS UPDATE #2: Since versionNameSuffix could only be used un buildTypes (unlike applicationIdSuffic),
+// we need to complete version name manually
+        applicationVariants.all { variant ->
+            if (variant.productFlavors.find { it.name == 'pro_hf' } != null) {
+                variant.mergedFlavor.versionName += '.1'
+            } else {
+                variant.mergedFlavor.versionName += '.0'
+            }
+        }
     }
 
-    sourceSets {
-        sourceSets.propri.setRoot('src/build-types/propri')
-        sourceSets.ent.setRoot('src/build-types/ent')
-        sourceSets.ent_hf.setRoot('src/build-types/ent_hf')
-        sourceSets.pro_hf.setRoot('src/build-types/pro_hf')
+// VARIANTS UPDATE #3: Once all variants are composed, we can set some as ignored (ie: not buildable)
+    variantFilter { variant ->
+        def dim = variant.flavors.collectEntries {
+            [(it.productFlavor.dimension): it.productFlavor.name]
+        }
+
+        if ((dim.bank == 'cdn' && dim.type != 'propri' && dim.type != 'ent')
+                || (dim.bank == 'sg' && dim.type != 'pro_hf' && dim.type != 'ent_hf')) {
+            variant.ignore = true
+        }
     }
 }
 
