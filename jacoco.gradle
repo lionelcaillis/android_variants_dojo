@@ -73,7 +73,7 @@ project.afterEvaluate {
             )
 
             def coverageSourceDirs = ["src/main/java"]
-// JACOCO UPDATE #1: use of source foldesr of ALL flavors (for each dimension) as source dir
+// JACOCO UPDATE #1: use of source folders of ALL flavors (for each dimension) as source dir
             variantParts.each { variantPart ->
                 coverageSourceDirs.add("/src/${variantPart.toString().toLowerCase()}/java")
                 coverageAllSourceDirs.add("/src/${variantPart.toString().toLowerCase()}/java")
